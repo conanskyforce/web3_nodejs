@@ -1,23 +1,26 @@
-
 # 使用nodejs 爬取以太坊区块链数据
 
 ## 技术栈：node mongodb mongoose web3 pm2
 
-> *目的:* 获取以太坊网络上边(所有)钱包的余额数量,交易数量等数据.(其实也可以用web3抓取数据,然后保存到自己数据库,做一个自己的区块链浏览器)  
+> **目的:** 获取以太坊网络上边(所有)钱包的余额数量,交易数量等数据.(其实也可以用web3抓取数据,然后保存到自己数据库,做一个自己的区块链浏览器)  
 
-> *思路:* 通过infura的接口(也可以自己下载geth客户端,然后自己作为一个节点,暴露api给web3),连接到以太坊主网络.
-通过web3.eth.getBlock 方法遍历所有的区块,在所有的区块中遍历所有的transaction(web3.eth.getTransaction),然后再获取所有的transaction中交易双方的地址,这样就能收集到区块中所有有交易的以太坊钱包地址,
-然后使用web3.eth.getBalance方法获取所有地址的余额.
-
-* 预先准备
-安装好nodejs,mongodb,  
-然后：
-npm i -S web3
-npm i -S mongoose  
+> **思路:** 
+1.通过infura的接口(也可以自己下载geth客户端,然后自己作为一个节点,暴露api给web3),连接到以太坊主网络.    
+2.通过web3.eth.getBlock方法遍历所有的区块,并将遍历过的区块保存在mongodb.     
+3.在这个区块中遍历所有的transactions(web3.eth.getTransaction).   
+4.然后再获取所有的transaction中交易双方的地址(from和to),这样就能收集到区块中所有有交易的以太坊钱包地址,将其保存在mongodb以便之后使用.   
+5.然后使用web3.eth.getBalance方法获取所有地址的余额,并将其保存至数据库.
 
 ## 核心代码
 
-//app.js
+**预先准备:**
+安装好nodejs,mongodb,  
+然后：
+npm i -S web3
+npm i -S mongoose
+
+**app.js代码:**
+```javascript    
 let Web3 = require('web3'),
 		web3,
 		mongoose = require('mongoose'),
@@ -31,6 +34,7 @@ if( typeof web3 !== 'undefined'){
 function toEth(res){
 	if(typeof res == 'number')return (res/(10**18)).toFixed(8);
 }
+
 //新增账户地址
 function addNewAccount(newAddress){
 	return new Promise((resolve,reject)=>{
@@ -51,7 +55,7 @@ function addNewAccount(newAddress){
 		})
 	})
 }
-//检查当前区块是否已经获取过了  
+//检查当前区块是否已经获取过了
 function checkBlock(newBlock){
 	return new Promise((resolve,reject)=>{
 		AccountModel.find({$where:'this.block!=undefined'},(err,doc)=>{
@@ -80,21 +84,6 @@ function updateBlock(newBlock){
 			if(err) return console.log(err)
 			console.log('updateBlock succeed: ',newBlock);
 			resolve();
-		})
-	})
-}
-//检查这个地址是否已经获取过了
-function checkBalance(addr){
-	return new Promise((resolve,reject)=>{
-		AccountModel.find({address:addr},(err,doc)=>{
-			if(err){
-				return console.log(err)
-			}
-			if(doc[0].balance){
-				resolve(true);
-			}else{
-				resolve(false);
-			}
 		})
 	})
 }
@@ -198,9 +187,9 @@ if(err) return console.log(err);
 })
 }
 // getBalance()
-
-
-//accountmodel.js
+```  
+**accountmodel.js代码**
+```javascript
 let mongoose = require('mongoose');
 //链接到mongodb的eth_accounts数据库
 mongoose.connect('mongodb://127.0.0.1:27017/eth_accounts',{ useNewUrlParser: true },(err)=>{
@@ -218,8 +207,8 @@ var AccountSchema = new mongoose.Schema({
 //创建并导出模型
 AccountModel = mongoose.model('AccountModel',AccountSchema);
 module.exports = AccountModel;
+```
 
 ## 确保开启mongodb之后   
 pm2 start app.js
-
 
