@@ -1,0 +1,17 @@
+{
+  "name": "web3js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bignumber.js": "^7.2.1",
+    "mongoose": "^5.2.4",
+    "web3": "^1.0.0-beta.34"
+  }
+}
